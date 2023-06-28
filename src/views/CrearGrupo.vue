@@ -4,13 +4,15 @@
     <div class="container">
       <form @submit.prevent="crearGrupo"><br><br>
         <div>
-          <label  for="nombre_grupo">Nombre:</label>
+          <label for="nombre_grupo">Nombre:</label>
           <input type="text" class="form-control" id="nombre_grupo" v-model="nombre_grupo">
+          <b-alert v-if="showAlert" show variant="danger">{{ alertMessage }}</b-alert>
         </div><br>
         <div>
           <button type="submit" class="btn btn-outline-primary">Agregar Grupo</button><br><br>
+          <b-spinner v-if="showSpinner" variant="success" label="Creando Grupo"></b-spinner>
           <button class="btn btn-outline-success" v-on:click="verGrupos">Ver Grupos</button><br><br>
-          <button  class="btn btn-outline-danger" v-on:click="cancelar" > Cancelar </button>
+          <button class="btn btn-outline-danger" v-on:click="cancelar">Cancelar</button>
         </div>
       </form>
     </div>
@@ -24,35 +26,42 @@ export default {
   data() {
     return {
       grupo: {
-        nombre_grupo:'',
-        integrates:'',
-        proyecto:''
-
+        nombre_grupo: '',
+        integrates: '',
+        proyecto: ''
       },
-      inscritos:[],
-      proyecto:[]
-    //   descripcion: ''
+      inscritos: [],
+      proyecto: [],
+      showAlert: false,
+      alertMessage: "",
+      showSpinner: false
     };
   },
-  created(){
+  created() {
     this.obtenerInscritos();
     this.obtenerProyecto();
   },
 
   methods: {
-    async obtenerInscritos(){
+    async obtenerInscritos() {
       const respuesta = await axios.get('http://127.0.0.1:8000/api/inscrito/');
       this.inscritos = respuesta.data;
-      
     },
-    async obtenerProyecto(){
+    async obtenerProyecto() {
       const respuesta = await axios.get('http://127.0.0.1:8000/api/proyecto/');
       this.proyecto = respuesta.data;
     },
     crearGrupo() {
+      if (!this.nombre_grupo) {
+        this.showAlert = true;
+        this.alertMessage = "Ingrese un nombre válido";
+        return;
+      }
+      
+      this.showSpinner = true; // Mostrar el spinner
+      
       axios.post('http://localhost:8000/api/grupo/', {
         nombre_grupo: this.nombre_grupo,
-        // descripcion: this.descripcion
       })
       .then(response => {
         console.log(response.data);
@@ -60,17 +69,22 @@ export default {
       })
       .catch(error => {
         console.log(error.response.data);
-      })   
+      })
+      .finally(() => {
+        this.showSpinner = false; // Ocultar el spinner después de la creación del grupo
+      });
     },
-    verGrupos(){
-        this.$router.push('/lista-grupos')
+    dismissAlert() {
+      this.showAlert = false;
+      this.alertMessage = "";
     },
-    cancelar(){
-        this.$router.push('/inicio')
+
+    verGrupos() {
+      this.$router.push('/lista-grupos');
+    },
+    cancelar() {
+      this.$router.push('/inicio');
     }
-  },
-//   async verGrupos(){
-//     this.$router.push('/ListaGrupos')
-//   }
+  }
 };
 </script>

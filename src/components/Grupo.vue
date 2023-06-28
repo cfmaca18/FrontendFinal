@@ -1,70 +1,71 @@
 <template>
-  <div class="p-3 text-center">
-    <h1>Integrantes del Grupo {{ id }}</h1>
+  <div>
     <div class="container">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Ficha</th>
-            <th scope="col">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(inscrito, index) in integrantes" :key="index">
-            <td>{{ inscrito.perfil.usuario.username }}</td>
-            <td>{{ inscrito.ficha.codigo }}</td>
-            <td>
-              <button @click="eliminarIntegrante(inscrito.id)" class="btn btn-outline-danger">x</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <h2 class="p-3 text-center">Integrantes de tu grupo :) </h2>
+      <div class="row">
+        <div class="col-12">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(inscrito, index) in integrantes" :key="index">
+                <td>{{ inscrito.perfil.usuario.username }}</td>
+                <td>
+                  <button @click="eliminarIntegrante(inscrito, index)" class="btn btn-outline-danger">x</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <button class="btn btn-outline-success" @click="agregarMiembro">Agregar Integrante</button>
-    <button class="btn btn-outline-danger" @click="cancelar">Cancelar</button>
-    <h3><button class="btn btn-outline-primary" @click="atras">Atras</button></h3>
   </div>
 </template>
+
 
 <script>
 import axios from 'axios';
 
 export default {
+  name: 'Grupo',
+  props: {
+    integrantes: {
+      type: Array,
+      required: true
+    }
+  },
   data() {
     return {
-      id: null,
-      integrantes: [],
+      id: null
+
     };
   },
   created() {
     this.obtenerIdDelGrupo();
-    this.getIntegrantes();
   },
   methods: {
+    remover: function (integrantes, inscrito){
+      // integrantes.pop(inscrito)
+      integrantes.splice(inscrito, 1)
+    },  
     obtenerIdDelGrupo() {
       const rutaActual = this.$route.path;
       this.id = rutaActual.substring(rutaActual.lastIndexOf('/') + 1);
     },
-    eliminarIntegrante(id) {
-      axios.patch(`http://127.0.0.1:8000/api/inscrito/${id}/`, { nombre_grupo: null })
+    eliminarIntegrante(inscrito, index) {
+      axios.patch(`http://127.0.0.1:8000/api/inscrito/${inscrito.id}/`, { nombre_grupo: null })
         .then(() => {
-          // Eliminar el integrante de la lista
-          this.integrantes = this.integrantes.filter(inscrito => inscrito.id !== id);
+          this.remover(this.integrantes,  index, inscrito)
+          this.$emit('integranteEliminado'); // Emitir el evento "integranteEliminado" al componente padre
         })
         .catch(error => {
           console.log(error);
         });
-    },
-    getIntegrantes() {
-      let id = this.$route.params.id;
-      axios.get(`http://127.0.0.1:8000/api/integrantes/${id}/`)
-        .then(response => {
-          this.integrantes = response.data;
-        })
-        .catch(error => {
-          console.log(error);
-        });
+
     },
     agregarMiembro() {
       this.$router.push('/agregar-integrante/' + this.id + "/");

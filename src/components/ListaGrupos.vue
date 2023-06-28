@@ -14,13 +14,19 @@
             <td>{{ grupo.nombre_grupo }}</td>
             <td>
               <button @click="actualizar(grupo.id)" class="btn btn-outline-success">Ir</button>
-              <button @click="eliminar(grupo.id)" class="btn btn-outline-danger">x</button>
+              <button @click="confirmarEliminar(grupo.id)" class="btn btn-outline-danger">x</button>
             </td>
           </tr>
+          <b-alert v-if="showAlert" show variant="danger">{{ alertMessage }}</b-alert>
+          <b-alert v-if="showSuccessAlert" show variant="success">{{ successMessage }}</b-alert>
         </tbody>
       </table>
     </div>
-    <h3><button class="btn btn-outline-primary" @click="atras">Atras</button></h3>
+    <div class="row justify-content-center">
+      <div class="col-auto">
+        <button class="btn btn-outline-primary" @click="atras">Atrás</button>
+      </div>
+    </div> 
   </div>
 </template>
 
@@ -30,7 +36,11 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      grupos: []
+      grupos: [],
+      showAlert: false,
+      alertMessage:"",
+      showSuccessAlert: false,
+      successMessage: ""
     };
   },
 
@@ -50,7 +60,13 @@ export default {
     },
 
     actualizar(id) {
-      this.$router.push('/grupo/' + id);
+      this.$router.push('/agregar-integrante/' + id);
+    },
+
+    confirmarEliminar(id) {
+      if (confirm("¿Estás seguro de eliminar este grupo? Esta acción no se puede deshacer.")) {
+        this.eliminar(id);
+      }
     },
 
     eliminar(id) {
@@ -58,11 +74,20 @@ export default {
         .then(() => {
           // Eliminar el grupo de la lista
           this.grupos = this.grupos.filter(grupo => grupo.id !== id);
+          this.showSuccessAlert = true;
+          this.successMessage = "El grupo se eliminó correctamente.";
         })
         .catch(error => {
-          console.log(error);
+          if (error.response && error.response.status === 500) {
+            this.showAlert = true;
+            this.alertMessage = "El grupo tiene integrantes. Elimine los integrantes para poder eliminar el grupo.";
+          } else {
+            this.showAlert = true;
+            this.alertMessage = "No se pudo eliminar el grupo debido a un error desconocido.";
+          }
         });
     },
+
     atras() {
       this.$router.push('/crear-grupo');
     }
